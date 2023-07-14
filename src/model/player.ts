@@ -1,6 +1,8 @@
+import { createKey } from "../listing"
+import { Class } from "../utils"
 import { BurnDeck, Card } from "./cards"
-import { Turn } from "./turn"
 import { Cmd } from "./commands"
+import { Turn } from "./turn"
 
 /** Player position at the table */
 export type PlayerId = number
@@ -8,6 +10,7 @@ export type PlayerId = number
 /** Card position in player's hand */
 export type CardId = number
 
+export const PLAYER = createKey<new() => Player>("player")
 export interface Player {
 
     /**
@@ -23,8 +26,8 @@ export interface Player {
     onRoundStart(hand: Card[]): void
 
     /**
-     * Called when any player finishes a turn. Including this player.
-     * @param turn Turn of the player
+     * Called when any player finishes a turn, including this player.
+     * @param turn The turn that was just finished.
      */
     onPlayerTurn(turn: Turn): void
 

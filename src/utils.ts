@@ -11,16 +11,6 @@ export function Tuple<T, N extends number>(value: T, length: N): Tuple<T, N> {
     return new Array(length).fill(value) as any
 }
 
-
-declare global {
-    interface Array<T> {
-        last(): T | undefined
-    }
-}
-Array.prototype.last = function (i: number = 0) {
-    return this[this.length - 1 - i]
-}
-
 import { stdin, stdout } from 'node:process'
 import * as readline_lib from 'node:readline/promises';
 export async function readLine(question: string = ""): Promise<string> {
@@ -29,3 +19,5 @@ export async function readLine(question: string = ""): Promise<string> {
     rl.close()
     return res
 }
+
+export type Class<T> = new(...args: any) => T
