@@ -1,6 +1,6 @@
 import { stdout } from "process"
 import "./ext"
-import { ANSI, getc } from "./sgr"
+import { ANSI } from "./sgr"
 
 
 (async function main() {
@@ -10,10 +10,15 @@ import { ANSI, getc } from "./sgr"
     const x = await ANSI("Test: ").ylw().read()
     ANSI(" = " + x).rst().writeLine()
 
-    while(true) {
-        const c = await getc()
-        stdout.write(c)
-    }
+    var i = 0
+    do {
+        i = await ANSI.menu([
+            "Ahoj",
+            "Jak",
+            ANSI("se ").grn("máš").rst("?"),
+            "Konec",
+        ])
+    } while (i !== 3);
 
 })()
 
