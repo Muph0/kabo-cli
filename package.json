@@ -1,0 +1,15 @@
+{
+  "name": "kabo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "out/main.js",
+  "scripts": {
+    "main": "node out/main.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.4.1",
+    "deepcopy": "^2.1.0"
+  }
+}

@@ -1,0 +1,14 @@
+{
+    "compileOnSave": true,
+    "include": [
+        "./src/**.ts"
+, "src/model/for-bots.ts", "src/model/cards.ts"    ],
+    "compilerOptions": {
+        "module": "CommonJS",
+        "outDir": "out",
+        "target": "ES2015",
+        "esModuleInterop": true,
+        "lib": ["ES2015"],
+        "strict": true,
+    }
+}
