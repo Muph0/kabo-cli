@@ -5,6 +5,8 @@ import { Turn } from "../model/turn";
 
 type CardSlot = Card | null
 
+function sum (arr: number[]) { return  arr.reduce(function (a, b) {return a + b}, 0) }
+
 export class AineBot implements Player {
     myId: number
     playerCount: number | null
@@ -44,9 +46,12 @@ export class AineBot implements Player {
             throw new Error('Not initialized')
         }
         const myCards = this.cards[this.myId]
-        if (deck.topCard && deck.topCard <= 3) {
-
+        if (sum(this.getKnownCards(myCards)) <= 8) {
+            return { name: "kabo" }
         }
+        // if (deck.topCard && deck.topCard <= 3) {
+
+        // }
         return {
             name: "regular",
             next: async (deckCard: Card) => {
@@ -112,13 +117,15 @@ export class AineBot implements Player {
             }
             this.cards[playerId] = squishedCards
         }
+        this.cards[playerId] = playerCards
     }
 
     findAllOccurrences(cards: CardSlot[], card: Card): number[] {
         const result = []
-        for (let cur of cards) {
+        for (let i = 0; i < cards.length; i++) {
+            const cur = cards[i];
             if (cur === card) {
-                result.push(card)
+                result.push(i)
             }
         }
         return result
