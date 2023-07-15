@@ -21,9 +21,11 @@ export interface Player {
 
     /**
      * Called on the start of every round.
-     * @param hand First cards of player's hand that they can see
+     * @param cards Number of cards dealt
+     * @param peek First cards of player's hand that they can see
+     * @param playerCount Number of players playing
      */
-    onRoundStart(hand: Card[]): void
+    onRoundStart(cards: number, peek: Card[], playerCount: number): void
 
     /**
      * Called when any player finishes a turn, including this player.

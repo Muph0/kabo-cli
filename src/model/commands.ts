@@ -1,7 +1,6 @@
 import { Card } from "./cards"
 import { CardId, PlayerId } from "./player"
 
-
 export namespace Cmd {
 
     export type TurnCommand = Kabo | PickCard
@@ -12,45 +11,37 @@ export namespace Cmd {
         name: "kabo"
     }
     export type PickCard = {
-        name: "burned card"
-        fromBurnDeck: AcceptCard
+        name: "burned"
+        next: AcceptCard
     } | {
-        name: "regular card"
-        fromRegularDeck: (c: Card) => UseCard
+        name: "regular"
+        next: (c: Card) => Promise<UseCard>
     }
 
-    export type AcceptCard = ({
+    export interface AcceptCard {
         name: "accept"
-        replace: [CardId]
-        revealed: (c: [Card]) => void
-    } | {
-        name: "accept"
-        replace: [CardId, CardId]
-        revealed: (c: [Card, Card], success: boolean) => void
-    } | {
-        name: "accept"
-        replace: [CardId, CardId, CardId]
-        revealed: (c: [Card, Card, Card], success: boolean) => void
-    })
+        replace: CardId[],
+        revealed?: (cards: Card[], success: boolean) => void
+    }
     export type Ability = Peek | Spy | Trade
-    export type Peek = {
+    export interface Peek {
         name: "peek"
         cardId: CardId
         revealed: (c: Card) => void
     }
-    export type Spy = {
+    export interface Spy {
         name: "spy"
         player: PlayerId
         cardId: CardId
         revealed: (c: Card) => void
     }
-    export type Trade = {
+    export interface Trade {
         name: "trade"
         player: PlayerId
         myCardId: CardId
         theirCardId: CardId
     }
-    export type DiscardCard = {
+    export interface DiscardCard {
         name: "discard"
     }
 

@@ -1,3 +1,4 @@
+import { ANSI } from "../ansi"
 import { Cmd } from "./commands"
 
 export type Card = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13
@@ -36,7 +37,24 @@ export function cardCan(card: Card, ability: Cmd.Ability["name"]): boolean {
         trade: CardPower.Trade
     }[ability]
 }
+export function cardAbility(card: Card): Cmd.Ability["name"] | undefined {
+    return {
+        0: undefined,
+        1: undefined,
+        [CardPower.Peek]: 'peek' as 'peek',
+        [CardPower.Spy]: 'spy' as 'spy',
+        [CardPower.Trade]: 'trade' as 'trade',
+    }[powers[card]]
+}
 
+export function cardString(c: Card): string {
+    const out = ANSI("[").ylw(c).rst("]")
+    const ability = cardAbility(c)
+    if (ability) {
+        out.gray(` (${ability.toUpperCase()})`).rst()
+    }
+    return out.toString()
+}
 
 /** Shufle a new deck of cards */
 export function newDeck(): Card[] {

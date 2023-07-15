@@ -21,6 +21,6 @@ export function Declare<T>(key: Key<T>) {
     }
 }
 
-export function getDeclared<T>(key: T): T[] {
+export function getDeclared<T>(key: Key<T>): T[] {
     return listing.get(key) ?? []
 }

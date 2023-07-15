@@ -20,4 +20,17 @@ export async function readLine(question: string = ""): Promise<string> {
     return res
 }
 
-export type Class<T> = new(...args: any) => T
+export type Class<T> = new (...args: any) => T
+
+
+export function range(to: number): Iterable<number>;
+export function range(from: number, to: number): Iterable<number>;
+export function* range(a: number, b?: number): Iterable<number> {
+    const to = b ?? a
+    const from = b !== undefined ? a : 0
+
+    for (let i = from; i < to; i++) {
+        yield i
+    }
+}
+
