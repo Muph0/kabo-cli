@@ -1,4 +1,4 @@
-import { Card, BurnDeck } from "../model/cards";
+import { Card, BurnDeck, cardAbility } from "../model/cards";
 import { Cmd } from "../model/commands";
 import { Player } from "../model/player"
 import { Turn } from "../model/turn";
@@ -6,12 +6,12 @@ import { Turn } from "../model/turn";
 type CardSlot = Card | null
 
 export class AineBot implements Player {
-    myId: number | null
+    myId: number
     playerCount: number | null
     cards: CardSlot[][]
 
     constructor() {
-        this.myId = null
+        this.myId = -1
         this.playerCount = null
         this.cards = []
     }
@@ -39,7 +39,7 @@ export class AineBot implements Player {
     onPlayerTurn(turn: Turn): void {
 
     }
-    turn(deck: BurnDeck): Promise<Cmd.TurnCommand> {
+    async turn(deck: BurnDeck): Promise<Cmd.TurnCommand> {
         if (!this.myId || !this.playerCount) {
             throw new Error('Not initialized')
         }
@@ -47,7 +47,20 @@ export class AineBot implements Player {
         if (deck.topCard && deck.topCard <= 3) {
 
         }
-        throw new Error("Not implemented")
+        return {
+            name: "regular",
+            next: async (deckCard: Card) => {
+                const unknownIdx = this.findUnknownCard(this.myId)
+                if (cardAbility(deckCard) === "peek" && unknownIdx) {
+                    return {
+                        name: "peek",
+                        cardId: unknownIdx,
+                        revealed: (c) => this.replaceCards(this.myId, [unknownIdx], c)
+                    }
+                }
+                return this.replaceBiggestWith(myCards, deckCard)
+            }
+        }
     }
 
     getCard(playerId: number, cardId: number): CardSlot {
@@ -77,20 +90,31 @@ export class AineBot implements Player {
         if (biggest <= newCard) {
             return { name: "discard" }
         }
-        const biggestIdx = this.findAllOcurrences(cards, biggest)
-
+        const biggestIdx = this.findAllOccurrences(cards, biggest)
+        this.replaceCards(this.myId!, biggestIdx, newCard)
         return {
             name: "accept",
             replace: biggestIdx,
         }
-
     }
 
-    replaceCards(replaceIdx: number[], newCard: CardSlot) {
-
+    replaceCards(playerId: number, replaceIdx: number[], newCard: CardSlot) {
+        const minIdx = Math.min(...replaceIdx)
+        const playerCards = this.cards[playerId]
+        playerCards[minIdx] = newCard
+        if (replaceIdx.length > 1) {
+            const squishedCards: CardSlot[] = []
+            for (let i = 0; i < playerCards.length; i++) {
+                if (i !== minIdx && replaceIdx.includes(i)) {
+                    continue
+                }
+                squishedCards.push(playerCards[i])
+            }
+            this.cards[playerId] = squishedCards
+        }
     }
 
-    findAllOcurrences(cards: CardSlot[], card: Card): number[] {
+    findAllOccurrences(cards: CardSlot[], card: Card): number[] {
         const result = []
         for (let cur of cards) {
             if (cur === card) {
