@@ -47,10 +47,10 @@ export function cardAbility(card: Card): Cmd.Ability["name"] | undefined {
     }[powers[card]]
 }
 
-export function cardString(c: Card): string {
+export function cardString(c: Card, withAbility = false): string {
     const out = ANSI("[").ylw(c).rst("]")
     const ability = cardAbility(c)
-    if (ability) {
+    if (withAbility && ability) {
         out.gray(` (${ability.toUpperCase()})`).rst()
     }
     return out.toString()

@@ -1,4 +1,4 @@
-import { stdin, stdout } from "process"
+import { stdout } from "process"
 import { getch } from "./ui"
 
 
@@ -17,14 +17,15 @@ const CTRL_C = "\x03"
 const DEL = code("3~")
 
 export function ctrl_c_exit(): never {
-    ANSI().red("^C").rst().writeLine()
+    ANSI().red("^C").rst().flushLine()
     process.exit(3)
 }
 
 export type ANSI = AnsiBuilder
-export const ANSI = Object.assign((text ?: any) => new AnsiBuilder(text ? [text.toString()] : []), {
+export const ANSI = Object.assign((text?: any) => new AnsiBuilder(text ? [text.toString()] : []), {
     sgr, code,
     UP, DOWN, RIGHT, LEFT, ENTER, BACKSPACE, CTRL_C, DEL,
+    cursor,
 })
 
 type Validator = (s: string) => boolean | string
@@ -34,27 +35,29 @@ class AnsiBuilder {
         private readonly text: string[],
     ) { }
 
-    blk(text?: any) { this.text.push(sgr(30), text ?? ""); return this }
-    red(text?: any) { this.text.push(sgr(31), text ?? ""); return this }
-    grn(text?: any) { this.text.push(sgr(32), text ?? ""); return this }
-    blu(text?: any) { this.text.push(sgr(34), text ?? ""); return this }
-    ylw(text?: any) { this.text.push(sgr(33), text ?? ""); return this }
-    mag(text?: any) { this.text.push(sgr(35), text ?? ""); return this }
-    cya(text?: any) { this.text.push(sgr(36), text ?? ""); return this }
-    whi(text?: any) { this.text.push(sgr(37), text ?? ""); return this }
-    bold(text?: any) { this.text.push(sgr(1), text ?? ""); return this }
-    gray(text?: any) { this.text.push(sgr(90), text ?? ""); return this }
-    rst(text?: any) { this.text.push(sgr(0), text ?? ""); return this }
+    blk(...text: any[]) { this.txt(sgr(30), ...text); return this }
+    red(...text: any[]) { this.txt(sgr(31), ...text); return this }
+    grn(...text: any[]) { this.txt(sgr(32), ...text); return this }
+    blu(...text: any[]) { this.txt(sgr(34), ...text); return this }
+    ylw(...text: any[]) { this.txt(sgr(33), ...text); return this }
+    mag(...text: any[]) { this.txt(sgr(35), ...text); return this }
+    cya(...text: any[]) { this.txt(sgr(36), ...text); return this }
+    whi(...text: any[]) { this.txt(sgr(37), ...text); return this }
+    bold(...text: any[]) { this.txt(sgr(1), ...text); return this }
+    gray(...text: any[]) { this.txt(sgr(90), ...text); return this }
+    rst(...text: any[]) { this.txt(sgr(0), ...text); return this }
 
-    txt(text: any) { this.text.push(`${text}`); return this }
+    txt(...text: any[]) { this.text.push(...text); return this }
 
-    up(amt = 1) { if (amt >= 1) this.text.push(code(Math.max(0, Math.floor(amt)), "A")); return this }
-    down(amt = 1) { if (amt >= 1) this.text.push(code(Math.max(0, Math.floor(amt)), "B")); return this }
+    up(amt = 1) { if (amt >= 1) this.txt(code(Math.max(0, Math.floor(amt)), "A")); return this }
+    down(amt = 1) { if (amt >= 1) this.txt(code(Math.max(0, Math.floor(amt)), "B")); return this }
 
-    right(amt = 1) { if (amt >= 1) this.text.push(code(Math.max(0, Math.floor(amt)), "C")); return this }
-    left(amt = 1) { if (amt >= 1) this.text.push(code(Math.max(0, Math.floor(amt)), "D")); return this }
+    right(amt = 1) { if (amt >= 1) this.txt(code(Math.max(0, Math.floor(amt)), "C")); return this }
+    left(amt = 1) { if (amt >= 1) this.txt(code(Math.max(0, Math.floor(amt)), "D")); return this }
 
+    /** Jump to begining of previous line */
     prevl(amt = 1) { this.txt("\r").up(amt); return this }
+    /** Jump to begining of next line */
     endl(amt = 1) {
         if (amt === 1) this.txt("\n")
         else if (amt > 1) this.txt("\r").up(amt)
@@ -62,13 +65,19 @@ class AnsiBuilder {
     }
     cret() { this.txt("\r"); return this }
 
-    log() { this.writeLine(); return this }
-    write() { stdout.write(this.toString()); this.clear(); return this }
-    writeLine() { this.endl().write(); return this }
+    flushLine() { this.endl().flush(); return this }
+    flush() { stdout.write(this.toString()); this.clear(); return this }
 
-    clrLineToEnd() { this.text.push(code("0K")); return this }
-    clrLineToStart() { this.text.push(code("1K")); return this }
-    clrLine() { this.text.push(code("2K")); return this }
+    clrLineToEnd() { this.txt(code("0K")); return this }
+    clrLineToStart() { this.txt(code("1K")); return this }
+    clrLine() { this.txt(code("2K")); return this }
+
+    /** Clear from cursor to the end of the screen */
+    clrBelow() { this.txt(code("0J")); return this }
+    /** Clear from beginning of the screen to cursor */
+    clrAbove() { this.txt(code("1J")); return this }
+    /** Clear entire screen */
+    clrScreen() { this.txt(code("2J")); return this }
 
     clear() { this.text.splice(0, this.text.length); return this }
     clone() { return new AnsiBuilder([...this.text]) }
@@ -80,7 +89,7 @@ class AnsiBuilder {
      */
     readLine(validator?: Validator, prefill?: string): Promise<string> {
         return this.read(validator, prefill)
-            .then(r => (ANSI().rst("\n").write(), r))
+            .then(r => (ANSI().rst("\n").flush(), r))
     }
 
     /**
@@ -92,7 +101,7 @@ class AnsiBuilder {
 
         var value = prefill ?? ""
         var cursor = value.length
-        this.txt(value).write()
+        this.txt(value).flush()
 
         while (true) {
             const oldCursor = cursor
@@ -132,7 +141,7 @@ class AnsiBuilder {
                 out.red(status).rst().left(status.length)
             }
 
-            out.write()
+            out.flush()
         }
     }
 
@@ -163,5 +172,18 @@ class AnsiBuilder {
     }
     [Symbol.toStringTag](): string {
         return this.toString()
+    }
+}
+
+const ANSI_CURSOR = /^\x1b\[(\d+);(\d+)R$/
+async function cursor(): Promise<{ x: number, y: number }> {
+    stdout.write(code("6n"))
+    const ch = await getch()
+
+    const match = ANSI_CURSOR.exec(ch)
+    if (!match) throw Error("ANSI cursor is broken")
+    return {
+        x: Number.parseInt(match[1]),
+        y: Number.parseInt(match[2]),
     }
 }

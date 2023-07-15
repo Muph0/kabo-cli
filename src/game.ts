@@ -29,7 +29,7 @@ export class Game {
         this.players = playerCtors.map(Ctor => new Ctor())
 
         if (!roundLimit && !scoreLimit)
-            ANSI().ylw("WARNING").rst(": Inifinite game created!").log()
+            ANSI().ylw("WARNING").rst(": Inifinite game created!").flushLine()
     }
 
     private startPlayerId = 0

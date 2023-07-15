@@ -18,38 +18,44 @@ export function getch(supressCtrlCTermination = false): Promise<string> {
     })
 }
 
-export async function menu(items: (string | object)[], selected: number = 0): Promise<number> {
+export async function menu(items: (string | object)[], selected: number = 0, eraseWhenDone = false): Promise<number> {
     if (items.length === 0) throw Error("Empty options in menu")
 
     const out = ANSI()
-    while (true) {
-        for (let i = 0; i < items.length; i++) {
-            const it = items[i]
+    try {
+        while (true) {
+            for (let i = 0; i < items.length; i++) {
+                const it = items[i]
 
-            if (i === selected) out.ylw("> ").rst()
-            else out.txt("  ")
+                if (i === selected) out.ylw("> ")
+                else out.txt("  ")
 
-            out.txt(it.toString()).endl()
-        }
-
-        out.write()
-        if (items.length === 1) return 0;
-        const c = await getch()
-
-        if (c === ANSI.UP) selected--
-        if (c === ANSI.DOWN) selected++
-        selected = (selected + items.length) % items.length
-        const it = items[selected]
-
-        if (c === ANSI.ENTER) {
-            if (it instanceof MenuItem) {
-                if (it.onEnter()) return selected
-            } else {
-                return selected
+                out.txt(it.toString()).rst().endl()
             }
-        }
 
-        out.up(items.length)
+            out.flush()
+            if (items.length === 1) return 0;
+            const c = await getch()
+
+            if (c === ANSI.UP) selected--
+            if (c === ANSI.DOWN) selected++
+            selected = (selected + items.length) % items.length
+            const it = items[selected]
+
+            if (c === ANSI.ENTER) {
+                if (it instanceof MenuItem) {
+                    if (it.onEnter()) return selected
+                } else {
+                    return selected
+                }
+            }
+
+            out.up(items.length)
+        }
+    } finally {
+        if (eraseWhenDone) {
+            ANSI().up(items.length).clrBelow().flush()
+        }
     }
 }
 

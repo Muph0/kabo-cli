@@ -1,3 +1,4 @@
+import { ANSI } from "./ansi"
 import { Card, cardCan, newDeck } from "./model/cards"
 import { Cmd } from "./model/commands"
 import { Move } from "./model/moves"
@@ -10,6 +11,7 @@ const START_PEEK_COUNT = 2
 const KABO_LOSE_PENALTY = 10
 
 type Hand = Card[]
+
 
 export class Round {
 
@@ -60,6 +62,9 @@ export class Round {
         if (this.firstTurn) this.broadcastStartingPeek()
 
         try {
+            // TODO: report
+            report(`turn start`)
+
             const cmd = await this.curPlayer.turn({ topCard: this.burnDeck.lastOrNull() })
             const move = await this.handleTurnCommand(cmd)
 
@@ -71,6 +76,8 @@ export class Round {
             throw e
 
         } finally {
+            // TODO: report
+            report(`turn end`)
             this.nextPlayer()
 
             if (this.finished) {
@@ -90,9 +97,12 @@ export class Round {
     }
 
     private async handleTurnCommand(cmd: Cmd.TurnCommand): Promise<Move.First> {
-        return cmd.name === "kabo"
-            ? { name: "kabo" }
-            : this.handlePickCard(cmd)
+        if (cmd.name === "kabo") {
+            // TODO: report
+            report(`kabo`)
+            return { name: "kabo" }
+        }
+        return this.handlePickCard(cmd)
     }
     private async handlePickCard(cmd: Cmd.PickCard): Promise<Move.PickCard> {
         if (cmd.name === "burned") {
@@ -205,6 +215,11 @@ export class Round {
 
     private handScore(id: PlayerId, withKaboPenalty = false) {
         return (this.hands[id] as number[]).reduce((a, b) => a + b)
+    }
+
+
+    private report(...args: any[]) {
+        ANSI().cya("P", this.curPlayerId, ": ").rst(...args).flushLine()
     }
 }
 

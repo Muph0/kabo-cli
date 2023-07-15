@@ -26,21 +26,18 @@ export class InteractivePlayer implements Player {
     onPlayerTurn(turn: Turn): void { }
 
     async turn(deck: BurnDeck): Promise<Cmd.TurnCommand> {
+        const out = ANSI()
         if (this.firstTurnOfRound) {
-            console.log("Dealt cards:")
+            out.txt("Dealt cards:")
             for (let c of this.cards) {
-                console.log(" -", c === null ? CARD_BACK : cardString(c))
+                out.txt(" ").txt(c === null ? CARD_BACK : cardString(c))
             }
-
-        } else {
-            console.log("Your cards:")
-            for (let c of this.cards) {
-                console.log(" -", CARD_BACK)
-            }
+            out.flushLine()
         }
+        this.firstTurnOfRound = false
 
         const top = deck.topCard
-        console.log("Burn deck: ", top !== undefined ? cardString(top) : "-empty-")
+        console.log("Burn deck:", top !== undefined ? cardString(top) : "-empty-")
 
         const sel = await menu([
             "Take a card",
@@ -64,7 +61,7 @@ export class InteractivePlayer implements Player {
     }
 
     private async decideOnCardUse(c: Card): Promise<Cmd.UseCard> {
-        console.log("Got card", cardString(c), "what now?")
+        console.log("Got card", cardString(c, true), "what now?")
 
         const ability = cardAbility(c)?.toUpperCase()
         const sel = await menu([
@@ -102,15 +99,7 @@ export class InteractivePlayer implements Player {
             name: "accept",
             replace: cardIds,
             revealed(cards, success) {
-                console.log("Revealed cards:")
-                for (let id of opts.indices) {
-                    const out = ANSI(" - ")
-                    const reveal = cardIds.indexOf(id)
-                    if (reveal >= 0)
-                        out.txt(cardString(cards[id])).endl()
-                    else
-                        out.txt(CARD_BACK).endl
-                }
+                console.log("Revealed cards:", cards.map(c => cardString(c)).join(", "))
             },
         }
     }
