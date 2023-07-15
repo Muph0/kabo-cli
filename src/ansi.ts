@@ -1,6 +1,5 @@
 import { stdin, stdout } from "process"
 import { getch } from "./ui"
-import { readLine } from "./utils"
 
 
 const code = (...codes: any) => `\x1b[${codes.join("")}`
