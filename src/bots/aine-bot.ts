@@ -42,7 +42,7 @@ export class AineBot implements Player {
 
     }
     async turn(deck: BurnDeck): Promise<Cmd.TurnCommand> {
-        if (!this.myId || !this.playerCount) {
+        if (!this.playerCount) {
             throw new Error('Not initialized')
         }
         const myCards = this.cards[this.myId]
