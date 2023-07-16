@@ -46,7 +46,7 @@ export class AineBot implements Player {
             throw new Error('Not initialized')
         }
         const myCards = this.cards[this.myId]
-        if (sum(this.getKnownCards(myCards)) <= 8) {
+        if (this.getEstimateSum(myCards) <= 8) {
             return { act: Action.Kabo }
         }
         // if (deck.topCard && deck.topCard <= 3) {
@@ -60,7 +60,7 @@ export class AineBot implements Player {
                     return Cmd.Peek({
                         act: Action.Peek,
                         cardId: unknownIdx,
-                        revealed: (c) => this.replaceCards(this.myId, [unknownIdx], c)
+                        revealed: (c) => this.replaceCards(this.myId, [unknownIdx], c),
                     })
                 }
                 return this.replaceBiggestWith(myCards, deckCard)
@@ -129,5 +129,9 @@ export class AineBot implements Player {
             }
         }
         return result
+    }
+
+    getEstimateSum(cards: CardSlot[]): number {
+        return sum(cards.map(card => card ? card : 6.5))
     }
 }
