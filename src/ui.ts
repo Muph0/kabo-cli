@@ -76,7 +76,7 @@ export class MenuItem {
     }
 
     toString() {
-        return this.enabled ? this.text : ANSI().blk(this.text).rst()
+        return this.enabled ? this.text : ANSI().gray(this.text).rst()
     }
 
     /**

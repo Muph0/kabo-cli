@@ -2,6 +2,7 @@ import { Player } from "./model/player"
 import { Round } from "./round"
 import { ANSI } from "./ansi"
 import { range } from "./utils"
+import { DefaultReporter } from "./reporting/reporter"
 
 export class Game {
 
@@ -34,8 +35,11 @@ export class Game {
 
     private startPlayerId = 0
     async nextRound(): Promise<Round> {
-        const round = new Round(this.startPlayerId, this.players)
+        const reporter = new DefaultReporter()
+        const round = new Round(this.startPlayerId, this.players, reporter)
+
         this.rounds.push(round)
+        await reporter.onRoundStart(round)
 
         if (this.firstRound) {
             this.players.forEach((p, id) => p.onGameStart(id))

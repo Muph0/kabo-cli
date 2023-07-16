@@ -12,7 +12,7 @@ function atLeast(n: number) {
 
 (async function main() {
 
-    ANSI("Welcome to ").cya("KABO").rst("!").flushLine()
+    ANSI().clrScreen().cursor(0,0).txt("Welcome to ").cya("KABO").rst("!").flushLine()
 
     const playerCount = await ANSI("Enter the number of players: ").readLineInt(atLeast(2))
     const players: (new () => Player)[] = []

@@ -79,6 +79,12 @@ class AnsiBuilder {
     /** Clear entire screen */
     clrScreen() { this.txt(code("2J")); return this }
 
+    /** Move cursor to position */
+    cursor(x: number, y: number) {
+        this.txt(code(Math.floor(y + 1), ";", Math.floor(x + 1), "H"))
+        return this
+    }
+
     clear() { this.text.splice(0, this.text.length); return this }
     clone() { return new AnsiBuilder([...this.text]) }
 

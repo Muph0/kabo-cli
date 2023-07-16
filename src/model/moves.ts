@@ -1,7 +1,7 @@
+import { Action } from "./commands"
 import { Card } from './cards'
 import { Cmd } from './commands'
-import { CardId } from './player'
-
+import { CardId, PlayerId } from './player'
 
 export namespace Move {
 
@@ -13,27 +13,24 @@ export namespace Move {
 
     //0 Kabo
     export interface Kabo {
-        name: "kabo"
+        act: Action.Kabo
         next?: undefined
     }
 
     //1 Pick a card
     export interface PickRegularCard {
-        name: "pick"
-        fromBurnDeck: false
+        act: Action.PickRegular
         next: UseAbility | AcceptCard | DiscardCard
     }
     export interface PickBurnedCard {
-        name: "pick"
-        fromBurnDeck: true
+        act: Action.PickBurned
         next: AcceptCard
-
         card: Card
     }
 
     //2 Use the card
     export interface AcceptCard {
-        name: "accept"
+        act: Action.Accept
         next?: undefined
 
         revealed: {
@@ -51,22 +48,30 @@ export namespace Move {
         }
     }
 
-    export type Ability = Omit<Cmd.Peek, "revealed">
-        | Omit<Cmd.Spy, "revealed">
-        | Cmd.Trade
-
-    export interface UseAbility {
-        name: "ability"
-        next?: undefined
-
-        ability: Ability
-        card: Card
+    export type UseAbility = Peek | Spy | Trade
+    export interface Peek extends DroppedCardLastMove {
+        act: Action.Peek
+        cardId: CardId
     }
 
-    export interface DiscardCard {
-        name: "discard"
-        next?: undefined
+    export interface Spy extends DroppedCardLastMove {
+        act: Action.Spy
+        player: PlayerId
+        cardId: CardId
+    }
 
+    export interface Trade extends DroppedCardLastMove {
+        act: Action.Trade
+        player: PlayerId
+        myCardId: CardId
+        theirCardId: CardId
+    }
+
+    export interface DiscardCard
+        extends Cmd.Discard, DroppedCardLastMove { }
+
+    interface DroppedCardLastMove {
+        next?: undefined
         card: Card
     }
 }

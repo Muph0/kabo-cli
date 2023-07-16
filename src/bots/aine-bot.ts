@@ -1,5 +1,5 @@
 import { Card, BurnDeck, cardAbility } from "../model/cards";
-import { Cmd } from "../model/commands";
+import { Action, Cmd } from "../model/commands";
 import { Player } from "../model/player"
 import { Turn } from "../model/turn";
 
@@ -47,21 +47,21 @@ export class AineBot implements Player {
         }
         const myCards = this.cards[this.myId]
         if (sum(this.getKnownCards(myCards)) <= 8) {
-            return { name: "kabo" }
+            return { act: Action.Kabo }
         }
         // if (deck.topCard && deck.topCard <= 3) {
 
         // }
         return {
-            name: "regular",
+            act: Action.PickRegular,
             next: async (deckCard: Card) => {
                 const unknownIdx = this.findUnknownCard(this.myId)
-                if (cardAbility(deckCard) === "peek" && unknownIdx) {
-                    return {
-                        name: "peek",
+                if (cardAbility(deckCard) === Action.Peek && unknownIdx) {
+                    return Cmd.Peek({
+                        act: Action.Peek,
                         cardId: unknownIdx,
                         revealed: (c) => this.replaceCards(this.myId, [unknownIdx], c)
-                    }
+                    })
                 }
                 return this.replaceBiggestWith(myCards, deckCard)
             }
@@ -93,12 +93,12 @@ export class AineBot implements Player {
     async replaceBiggestWith(cards: CardSlot[], newCard: Card): Promise<Cmd.UseCard> {
         const biggest = Math.max(...this.getKnownCards(cards)) as Card
         if (biggest <= newCard) {
-            return { name: "discard" }
+            return { act: Action.Discard }
         }
         const biggestIdx = this.findAllOccurrences(cards, biggest)
         this.replaceCards(this.myId!, biggestIdx, newCard)
         return {
-            name: "accept",
+            act: Action.Accept,
             replace: biggestIdx,
         }
     }

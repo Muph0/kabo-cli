@@ -1,52 +1,71 @@
 import { Card } from "./cards"
+import { Move } from "./moves"
 import { CardId, PlayerId } from "./player"
+
+export const enum Action {
+    Kabo, PickBurned, PickRegular, Accept, Peek, Spy, Trade, Discard
+}
+export namespace Action {
+    export type Ability = Action.Peek | Action.Spy | Action.Trade
+}
 
 export namespace Cmd {
 
-    export type TurnCommand = Kabo | PickCard
-    export type Any = Kabo | PickCard | AcceptCard | Ability
-    export type UseCard = AcceptCard | DiscardCard | Ability
 
+    export type TurnCommand = Kabo | Pick
+    export type Any = Kabo | Pick | Accept | Ability
+    export type UseCard = Accept | Discard | Ability
+
+    export const Kabo = (cmd: Kabo) => cmd
     export interface Kabo {
-        name: "kabo"
+        act: Action.Kabo
     }
-    export type PickCard = {
-        name: "burned"
-        next: AcceptCard
+    export const Pick = (cmd: Pick) => cmd
+    export type Pick = {
+        act: Action.PickBurned
+        next: Accept
     } | {
-        name: "regular"
+        act: Action.PickRegular
         next: (c: Card) => Promise<UseCard>
     }
 
-    export interface AcceptCard {
-        name: "accept"
+    export const Accept = (cmd: Accept) => cmd
+    export interface Accept {
+        act: Action.Accept
         replace: CardId[],
+        // TODO: replace cards with partial hand, similar to Player.onRoundStart
         revealed?: (cards: Card[], success: boolean) => void
     }
     export type Ability = Peek | Spy | Trade
+    export const Ability = (cmd: Ability) => cmd
+    export const Peek = (cmd: Peek) => cmd
     export interface Peek {
-        name: "peek"
+        act: Action.Peek
         cardId: CardId
-        revealed: (c: Card) => void
+        revealed?: (c: Card) => void
     }
+    export const Spy = (cmd: Spy) => cmd
     export interface Spy {
-        name: "spy"
+        act: Action.Spy
         player: PlayerId
         cardId: CardId
-        revealed: (c: Card) => void
+        revealed?: (c: Card) => void
     }
+    export const Trade = (cmd: Trade) => cmd
     export interface Trade {
-        name: "trade"
+        act: Action.Trade
         player: PlayerId
         myCardId: CardId
         theirCardId: CardId
     }
-    export interface DiscardCard {
-        name: "discard"
+
+    export const Discard = (cmd: Discard) => cmd
+    export interface Discard {
+        act: Action.Discard
     }
 
-    export function isAbility(c: string): boolean {
-        return c in { peek: 0, spy: 0, trade: 0 }
+    const abilities = [Action.Peek, Action.Spy, Action.Trade]
+    export function isAbility(c: Action): boolean {
+        return abilities.includes(c)
     }
-
 }

@@ -1,7 +1,7 @@
 import { ANSI } from "../ansi";
 import { Declare } from "../listing";
-import { BurnDeck, Card, cardAbility, cardString } from "../model/cards";
-import { Cmd } from "../model/commands";
+import { BurnDeck, Card, abilityName, cardAbility, cardString } from "../model/cards";
+import { Action, Cmd } from "../model/commands";
 import { Player, PLAYER } from "../model/player";
 import { Turn } from "../model/turn";
 import { menu, MenuCheckbox, MenuItem } from "../ui";
@@ -47,39 +47,40 @@ export class InteractivePlayer implements Player {
 
         if (sel === 0) {
             return {
-                name: "regular",
+                act: Action.PickRegular,
                 next: c => this.decideOnCardUse(c)
             }
         } else if (sel === 1) {
             return {
-                name: "burned",
+                act: Action.PickBurned,
                 next: await this.decideOnAcceptCard(top!),
             }
         } else {
-            return { name: "kabo" }
+            return { act: Action.Kabo }
         }
     }
 
     private async decideOnCardUse(c: Card): Promise<Cmd.UseCard> {
         console.log("Got card", cardString(c, true), "what now?")
 
-        const ability = cardAbility(c)?.toUpperCase()
+        const ability = cardAbility(c)
+        const name = ability ? abilityName(ability) : ""
         const sel = await menu([
-            "Accept card and replace one or more of my cards with it",
-            new MenuItem("Use ability " + (ability ?? ""), ability !== undefined),
-            "Discard card to the burn deck",
-        ])
+            "Accept card ",
+            new MenuItem("Use ability " + name, ability !== undefined),
+            "Discard card",
+        ], 0, true)
 
         if (sel === 0) {
             return this.decideOnAcceptCard(c)
         } else if (sel === 1) {
-            return { name: "discard" }
+            return { act: Action.Discard }
         } else {
-            return { name: "discard" }
+            return { act: Action.Discard }
         }
     }
 
-    private async decideOnAcceptCard(c: Card): Promise<Cmd.AcceptCard> {
+    private async decideOnAcceptCard(c: Card): Promise<Cmd.Accept> {
 
         const opts: MenuCheckbox[] = [];
         const checked = () => opts.count(o => o.checked)
@@ -91,17 +92,17 @@ export class InteractivePlayer implements Player {
         await menu([
             ...opts,
             new MenuItem(okText, () => checked() > 0),
-        ])
+        ], 0, true)
 
         const cardIds = opts.map((o, i) => o.checked ? i : null).filterNot(null)
 
-        return {
-            name: "accept",
+        return Cmd.Accept({
+            act: Action.Accept,
             replace: cardIds,
             revealed(cards, success) {
                 console.log("Revealed cards:", cards.map(c => cardString(c)).join(", "))
             },
-        }
+        })
     }
 
 }

@@ -1,7 +1,8 @@
-import { PlayerId } from './player';
-import { Move } from './moves';
-import { Card } from './cards';
 import deepcopy from 'deepcopy';
+import { Card } from './cards';
+import { Action } from "./commands";
+import { Move } from './moves';
+import { PlayerId } from './player';
 
 
 export class Turn {
@@ -31,10 +32,12 @@ export class Turn {
      */
     burntCards(): Card[] {
         for (let move of this.moves()) {
-            switch (move.name) {
-                case "discard": return [move.card]
-                case "ability": return [move.card]
-                case "accept": return move.revealed.success
+            switch (move.act) {
+                case Action.Peek:
+                case Action.Spy:
+                case Action.Trade:
+                case Action.Discard: return [move.card]
+                case Action.Accept: return move.revealed.success
                     ? [...move.revealed.cards] : []
             }
         }
