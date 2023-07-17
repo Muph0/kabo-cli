@@ -4,7 +4,7 @@ import { BurnDeck, Card, abilityName, cardAbility, cardString } from "../model/c
 import { Action, Cmd } from "../model/commands";
 import { Player, PLAYER } from "../model/player";
 import { Turn } from "../model/turn";
-import { menu, MenuCheckbox, MenuItem } from "../ui";
+import { CardSelect, menu, MenuCheckbox, MenuItem } from "../ui";
 
 const CARD_BACK = "[?]"
 
@@ -82,11 +82,15 @@ export class InteractivePlayer implements Player {
 
         if (sel === 0) {
             return this.decideOnAcceptCard(c)
-        } else if (sel === 1) {
-            return { act: Action.Discard }
+        } else if (sel === 1 && ability) {
+            return this.useAbility(ability)
         } else {
             return { act: Action.Discard }
         }
+    }
+
+    private logRevealedCards(cards: Card[]) {
+        console.log(cards.length > 1 ? "Revealed cards:" : "Revealed card:" , cards.map(c => cardString(c)).join(", "))
     }
 
     private async decideOnAcceptCard(c: Card): Promise<Cmd.Accept> {
@@ -108,10 +112,30 @@ export class InteractivePlayer implements Player {
         return Cmd.Accept({
             act: Action.Accept,
             replace: cardIds,
-            revealed(cards, success) {
-                console.log("Revealed cards:", cards.map(c => cardString(c)).join(", "))
-            },
+            revealed: (cards, success) => this.logRevealedCards(cards),
         })
     }
+
+    private async useAbility(ability: Action.Ability): Promise<Cmd.UseCard> {
+        switch (ability) {
+            case Action.Peek:
+            return this.usePeek()
+            break
+            default:
+                return { act: Action.Discard }
+        }
+    }
+
+    private async usePeek(): Promise<Cmd.Ability> {
+        const select = new CardSelect(this.cards.length, 1)
+        const selected = await select.doSelect()
+        if (selected.length !== 1) throw new Error('Incorrect card amount selected')
+        return {
+            act: Action.Peek,
+            cardId: selected[0],
+            revealed: (card) => this.logRevealedCards([card]),
+        }
+    }
+
 }
 
