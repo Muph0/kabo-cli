@@ -35,7 +35,7 @@ export async function menu(items: (string | object)[], selected: number = 0, era
                 if (i === selected) out.ylw("> ")
                 else out.txt("  ")
 
-                out.txt(it.toString()).rst().endl()
+                out.txt(it.toString()).rst().clrLineToEnd().endl()
             }
 
             out.flush()
@@ -111,5 +111,37 @@ export class MenuCheckbox extends MenuItem {
     override onEnter(): boolean {
         if (this.enabled) this.checked = !this.checked
         return false
+    }
+}
+
+export class CardSelect {
+    CARD_BACK = "[?]"
+
+    cardsTotal: number
+    maxSelected: number
+    checkboxes: MenuCheckbox[]
+
+    constructor(cardsTotal: number, maxSelected: number) {
+        this.cardsTotal = cardsTotal
+        this.maxSelected = maxSelected
+        this.checkboxes = []
+    }
+
+    async doSelect(): Promise<number[]> {
+        const checked = () => this.checkboxes.count(o => o.checked)
+        const cardEnabled = (c: MenuCheckbox) => checked() < 3 || c.checked
+        const okText = () => checked() > 0 ? "OK" : (this.maxSelected > 1 ? "Select at least one card" : "Select card")
+
+        for (let i = 0; i < this.cardsTotal; i++) {
+            this.checkboxes.push(new MenuCheckbox(this.CARD_BACK, cardEnabled))   
+        }
+
+        await menu([
+            ...this.checkboxes,
+            new MenuItem(okText, () => checked() > 0),
+        ])
+
+        const cardIds = this.checkboxes.map((o, i) => o.checked ? i : null).filterNot(null)
+        return cardIds
     }
 }
