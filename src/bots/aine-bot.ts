@@ -3,6 +3,8 @@ import { Action, Cmd } from "../model/commands";
 import { Player } from "../model/player"
 import { Turn } from "../model/turn";
 
+const MEDIAN_VALUE = 6
+
 type CardSlot = Card | null
 
 function sum(arr: number[]) { return arr.reduce(function (a, b) { return a + b }, 0) }
@@ -49,13 +51,23 @@ export class AineBot implements Player {
         if (this.getEstimateSum(myCards) <= 8) {
             return { act: Action.Kabo }
         }
-        // if (deck.topCard && deck.topCard <= 3) {
-
-        // }
+        if (deck.topCard && deck.topCard <= 3) {
+            const [biggest, biggestIdx] = this.getEstimatedBiggestCardAndIdx(myCards)
+            if (biggest >= MEDIAN_VALUE) {
+                this.replaceCards(this.myId, [biggestIdx], deck.topCard)
+                return {
+                    act: Action.PickBurned,
+                    next: {
+                        act: Action.Accept,
+                        replace: [biggestIdx]
+                    }
+                }
+            }
+        }
         return {
             act: Action.PickRegular,
             next: async (deckCard: Card) => {
-                const unknownIdx = this.findUnknownCard(this.myId)
+                const unknownIdx = this.findUnknownCard(myCards)
                 if (cardAbility(deckCard) === Action.Peek && unknownIdx) {
                     return Cmd.Peek({
                         act: Action.Peek,
@@ -63,7 +75,7 @@ export class AineBot implements Player {
                         revealed: (c) => this.replaceCards(this.myId, [unknownIdx], c),
                     })
                 }
-                return this.replaceBiggestWith(myCards, deckCard)
+                return this.replaceBiggestWith(myCards, deckCard, true)
             }
         }
     }
@@ -80,9 +92,8 @@ export class AineBot implements Player {
      * Returns the index of the first unknown card of the player
      * or null if all are known
      * */
-    findUnknownCard(playerId: number): number | null {
-        const playerCards = this.cards[playerId]
-        const unknownIdx = playerCards.map((card, i) => card ? null : i).filter(v => v !== null)
+    findUnknownCard(cards: CardSlot[]): number | null {
+        const unknownIdx = cards.map((card, i) => card ? null : i).filter(v => v !== null)
         return unknownIdx.length > 0 ? unknownIdx[0] : null
     }
 
@@ -90,17 +101,32 @@ export class AineBot implements Player {
         return cards.filterNot(null)
     }
 
-    async replaceBiggestWith(cards: CardSlot[], newCard: Card): Promise<Cmd.UseCard> {
-        const biggest = Math.max(...this.getKnownCards(cards)) as Card
-        if (biggest <= newCard) {
+    replaceUnknownWithEstimate(cards: CardSlot[]): Card[] {
+        return cards.map(cs => cs ? cs : MEDIAN_VALUE as Card)
+    }
+
+    async replaceBiggestWith(cards: CardSlot[], newCard: Card, allowDiscard: boolean): Promise<Cmd.UseCard> {
+        const biggest = this.getBiggestCard(cards)
+        if (allowDiscard && biggest <= newCard) {
             return { act: Action.Discard }
         }
         const biggestIdx = this.findAllOccurrences(cards, biggest)
-        this.replaceCards(this.myId!, biggestIdx, newCard)
+        this.replaceCards(this.myId, biggestIdx, newCard)
         return {
             act: Action.Accept,
             replace: biggestIdx,
         }
+    }
+
+    getBiggestCard(cards: CardSlot[]): Card {
+        return Math.max(...this.getKnownCards(cards)) as Card
+    }
+
+    getEstimatedBiggestCardAndIdx(cards: CardSlot[]): [Card, number] {
+        const biggest = Math.max(...this.replaceUnknownWithEstimate(cards)) as Card
+        const idx = cards.includes(biggest) ? cards.indexOf(biggest) : this.findUnknownCard(cards)
+        if (idx === null) throw new Error('Bug with estimating cards')
+        return [biggest, idx]
     }
 
     replaceCards(playerId: number, replaceIdx: number[], newCard: CardSlot) {
@@ -132,6 +158,7 @@ export class AineBot implements Player {
     }
 
     getEstimateSum(cards: CardSlot[]): number {
-        return sum(cards.map(card => card ? card : 6.5))
+        return sum(cards.map(card => card ? card : MEDIAN_VALUE))
     }
+
 }
