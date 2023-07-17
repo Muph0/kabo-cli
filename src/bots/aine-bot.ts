@@ -5,7 +5,7 @@ import { Turn } from "../model/turn";
 
 type CardSlot = Card | null
 
-function sum (arr: number[]) { return  arr.reduce(function (a, b) {return a + b}, 0) }
+function sum(arr: number[]) { return arr.reduce(function (a, b) { return a + b }, 0) }
 
 export class AineBot implements Player {
     myId: number
@@ -38,7 +38,7 @@ export class AineBot implements Player {
             this.cards.push(curCards)
         }
     }
-    onPlayerTurn(turn: Turn): void {
+    async onPlayerTurn(turn: Turn): Promise<void> {
 
     }
     async turn(deck: BurnDeck): Promise<Cmd.TurnCommand> {

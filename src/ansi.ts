@@ -25,7 +25,7 @@ export type ANSI = AnsiBuilder
 export const ANSI = Object.assign((text?: any) => new AnsiBuilder(text ? [text.toString()] : []), {
     sgr, code,
     UP, DOWN, RIGHT, LEFT, ENTER, BACKSPACE, CTRL_C, DEL,
-    cursor,
+    getCursor, getTermSize
 })
 
 type Validator = (s: string) => boolean | string
@@ -80,8 +80,8 @@ class AnsiBuilder {
     clrScreen() { this.txt(code("2J")); return this }
 
     /** Move cursor to position */
-    cursor(x: number, y: number) {
-        this.txt(code(Math.floor(y + 1), ";", Math.floor(x + 1), "H"))
+    setCursor(x: number, y: number) {
+        this.txt(code(Math.floor(y + 1), ";", Math.floor(x + 1), "f"))
         return this
     }
 
@@ -181,15 +181,25 @@ class AnsiBuilder {
     }
 }
 
-const ANSI_CURSOR = /^\x1b\[(\d+);(\d+)R$/
-async function cursor(): Promise<{ x: number, y: number }> {
+function getCursor(): Promise<[number, number]> {
     stdout.write(code("6n"))
-    const ch = await getch()
+    return getch().then(parseDeviceStatusReport)
+}
 
-    const match = ANSI_CURSOR.exec(ch)
-    if (!match) throw Error("ANSI cursor is broken")
-    return {
-        x: Number.parseInt(match[1]),
-        y: Number.parseInt(match[2]),
-    }
+
+async function getTermSize(): Promise<[number, number]> {
+    const cursor = await getCursor()
+    // fancy trick: move the cursor to 9999,9999 and check its position
+    ANSI(code("9999;9999H") + code("6n")).setCursor(...cursor).flush()
+    return getch().then(parseDeviceStatusReport).then(pos => [pos[0] + 1, pos[1] + 1])
+}
+
+const ANSI_DSR = /^\x1b\[(\d+);(\d+)R$/
+function parseDeviceStatusReport(dsr: string): [number, number] {
+    const match = ANSI_DSR.exec(dsr)
+    if (!match) throw Error("Can't determine cursor position of this terminal")
+    return [
+        Number.parseInt(match[2]) - 1,
+        Number.parseInt(match[1]) - 1,
+    ]
 }

@@ -70,8 +70,8 @@ export class Round {
             const move = await this.handleTurnCommand(cmd)
 
             const turn = new Turn(this.curPlayerId, this.turns.length, move)
-            this.turns.push(turn)
-            await this.reporter.onTurnEnd(turn)
+
+            await this.handleTurnEnd(turn)
             return turn
 
         } catch (e) {
@@ -94,6 +94,13 @@ export class Round {
                 )
             }
         }
+    }
+    async handleTurnEnd(turn: Turn) {
+        this.turns.push(turn)
+        for (let p of this.players) {
+            await p.onPlayerTurn(turn)
+        }
+        await this.reporter.onTurnEnd(turn)
     }
 
     private async handleTurnCommand(cmd: Cmd.TurnCommand): Promise<Move.First> {

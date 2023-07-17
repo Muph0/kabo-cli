@@ -18,10 +18,15 @@ export function getch(supressCtrlCTermination = false): Promise<string> {
     })
 }
 
-export async function menu(items: (string | object)[], selected: number = 0, eraseWhenDone = false): Promise<number> {
+export async function menu(items: (string | object)[], selected: number = 0, eraseWhenDone = true): Promise<number> {
     if (items.length === 0) throw Error("Empty options in menu")
 
     const out = ANSI()
+    const pos = await ANSI.getCursor()
+    const size = await ANSI.getTermSize()
+
+    pos[1] = Math.min(pos[1], size[1] - items.length - 1)
+
     try {
         while (true) {
             for (let i = 0; i < items.length; i++) {
@@ -49,12 +54,11 @@ export async function menu(items: (string | object)[], selected: number = 0, era
                     return selected
                 }
             }
-
-            out.up(items.length)
+            out.setCursor(...pos)
         }
     } finally {
         if (eraseWhenDone) {
-            ANSI().up(items.length).clrBelow().flush()
+            ANSI().setCursor(...pos).clrBelow().flush()
         }
     }
 }

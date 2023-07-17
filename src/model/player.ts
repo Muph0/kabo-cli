@@ -31,7 +31,7 @@ export interface Player {
      * Called when any player finishes a turn, including this player.
      * @param turn The turn that was just finished.
      */
-    onPlayerTurn(turn: Turn): void
+    onPlayerTurn(turn: Turn): Promise<void>
 
     /**
      * Called when its this player's turn.

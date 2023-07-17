@@ -11,7 +11,7 @@ const CARD_BACK = "[?]"
 @Declare(PLAYER)
 export class InteractivePlayer implements Player {
     private id = 0
-    private cards: (Card | null)[] = []
+    private cards: (Card | undefined)[] = []
     private firstTurnOfRound = false
 
     onGameStart(id: number): void {
@@ -19,29 +19,38 @@ export class InteractivePlayer implements Player {
     }
 
     onRoundStart(cards: number, peek: Card[]): void {
-        this.cards = peek.concat(new Array(cards - peek.length).fill(null))
+        this.cards = peek.concat(new Array(cards - peek.length).fill(undefined))
         this.firstTurnOfRound = true
     }
 
-    onPlayerTurn(turn: Turn): void { }
+    async onPlayerTurn(turn: Turn): Promise<void> {
+        if (turn.player === this.id) {
+            await ANSI("Your turn is over.").readLine()
+        }
+    }
 
     async turn(deck: BurnDeck): Promise<Cmd.TurnCommand> {
         const out = ANSI()
         if (this.firstTurnOfRound) {
             out.txt("Dealt cards:")
             for (let c of this.cards) {
-                out.txt(" ").txt(c === null ? CARD_BACK : cardString(c))
+                out.txt(" ", cardString(c))
             }
-            out.flushLine()
+        } else {
+            out.txt("Your cards: ")
+            for (let c of this.cards) {
+                out.txt(" ", cardString())
+            }
         }
-        this.firstTurnOfRound = false
+        out.flushLine()
+        //this.firstTurnOfRound = false
 
         const top = deck.topCard
         console.log("Burn deck:", top !== undefined ? cardString(top) : "-empty-")
 
         const sel = await menu([
-            "Take a card",
-            new MenuItem("Take a card from the burn deck", !!top),
+            "Draw a card",
+            new MenuItem("Draw from the burn deck", !!top),
             "Kabo",
         ])
 
@@ -69,7 +78,7 @@ export class InteractivePlayer implements Player {
             "Accept card ",
             new MenuItem("Use ability " + name, ability !== undefined),
             "Discard card",
-        ], 0, true)
+        ])
 
         if (sel === 0) {
             return this.decideOnAcceptCard(c)
@@ -92,7 +101,7 @@ export class InteractivePlayer implements Player {
         await menu([
             ...opts,
             new MenuItem(okText, () => checked() > 0),
-        ], 0, true)
+        ])
 
         const cardIds = opts.map((o, i) => o.checked ? i : null).filterNot(null)
 
@@ -104,6 +113,5 @@ export class InteractivePlayer implements Player {
             },
         })
     }
-
 }
 

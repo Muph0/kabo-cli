@@ -12,7 +12,7 @@ function atLeast(n: number) {
 
 (async function main() {
 
-    ANSI().clrScreen().cursor(0,0).txt("Welcome to ").cya("KABO").rst("!").flushLine()
+    ANSI().clrScreen().setCursor(0,0).txt("Welcome to ").cya("KABO").rst("!").flushLine()
 
     const playerCount = await ANSI("Enter the number of players: ").readLineInt(atLeast(2))
     const players: (new () => Player)[] = []
@@ -23,14 +23,12 @@ function atLeast(n: number) {
         header.clone().flushLine()
 
         const options = [InteractivePlayer, AineBot]
-        sel = await menu(options.map(p => p.name), sel, true)
+        sel = await menu(options.map(p => p.name), sel)
         const player = options[sel]
 
         ANSI().prevl().txt(header, " ", player.name).flushLine()
         players.push(player)
     }
-
-    ANSI().gray(`Selected players: ${players.map(p => p.name).join(", ")}`).rst().flushLine()
 
     const game = new Game(players, 100)
 

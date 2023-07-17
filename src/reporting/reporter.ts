@@ -72,7 +72,7 @@ export class DefaultReporter implements Reporter {
         this.player(` discards ${cardString(card)} to the burn deck`)
     }
     async onTurnEnd(turn: Turn): Promise<void> {
-
+        this.player(` finishes turn`, JSON.stringify(turn)).flushLine()
     }
 
     private markCard(hand: Card[], id: CardId, show = false): string {
