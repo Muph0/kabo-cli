@@ -129,7 +129,7 @@ export class CardSelect {
 
     async doSelect(): Promise<number[]> {
         const checked = () => this.checkboxes.count(o => o.checked)
-        const cardEnabled = (c: MenuCheckbox) => checked() < 3 || c.checked
+        const cardEnabled = (c: MenuCheckbox) => checked() < this.maxSelected || c.checked
         const okText = () => checked() > 0 ? "OK" : (this.maxSelected > 1 ? "Select at least one card" : "Select card")
 
         for (let i = 0; i < this.cardsTotal; i++) {
